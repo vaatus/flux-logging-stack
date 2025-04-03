@@ -4,7 +4,7 @@ resources:
   # Apply namespace definitions first
   - namespaces.yaml
   # Apply Elasticsearch next
-  - Elasticsearch/
+  - ./Elasticsearch/
   # Additional services can be added later
   # - Fluent-bit/kustomization.yaml
   # - Kibana/kustomization.yaml
