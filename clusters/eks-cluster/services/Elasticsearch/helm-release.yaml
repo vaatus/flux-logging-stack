@@ -8,7 +8,7 @@ spec:
   releaseName: elasticsearch
   chart:
     spec:
-      chart: elastic/elasticsearch
+      chart: elasticsearch
       version: "8.5.1"
       sourceRef:
         kind: HelmRepository
