@@ -27,9 +27,3 @@ spec:
       sslSkipVerify: true
       all: true
       indices: true
-    serviceMonitor:
-      enabled: true
-      labels:
-        release: kube-prometheus-stack
-      interval: 15s
-      scrapeTimeout: 10s

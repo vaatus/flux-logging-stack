@@ -1,0 +1,19 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: elasticsearch-exporter-sm
+  namespace: flux-system
+  labels:
+    release: kube-prometheus-stack
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: prometheus-elasticsearch-exporter
+      app.kubernetes.io/instance: prometheus-elasticsearch-exporter
+  namespaceSelector:
+    matchNames:
+      - flux-system
+  endpoints:
+    - port: http
+      interval: 15s
+      scrapeTimeout: 10s
