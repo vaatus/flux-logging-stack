@@ -1,0 +1,65 @@
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: fluent-bit
+  namespace: flux-system
+spec:
+  interval: 5m
+  releaseName: fluent-bit
+  chart:
+    spec:
+      chart: fluent-bit
+      version: "0.48.9"
+      sourceRef:
+        kind: HelmRepository
+        name: bitnami-charts
+        namespace: flux-system
+  values:
+    # Bitnami’s "fluent-bit" chart can be customized via extraInputs/extraOutputs
+    # if you want a specific config snippet. For example, a minimal ES output:
+    extraOutputs: |-
+      [OUTPUT]
+          Name  es
+          Match *
+          Host  elasticsearch-master
+          Port  9200
+          Logstash_Format On
+          HTTP_User  ${FLUENT_ELASTICSEARCH_USER}
+          HTTP_Passwd  ${FLUENT_ELASTICSEARCH_PASSWORD}
+          tls On
+          tls.verify On
+          tls.ca_file /fluent-bit/tls/tls.crt
+
+    # ^ If you want to turn on certificate validation, set `tls.verify On`
+    #   and also supply the CA certificate. See the example below if you want to do that.
+
+    # Provide environment variables pointing to the existing ES credentials secret
+    extraEnvVars:
+      - name: FLUENT_ELASTICSEARCH_USER
+        valueFrom:
+          secretKeyRef:
+            name: elasticsearch-master-credentials
+            key: username
+      - name: FLUENT_ELASTICSEARCH_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: elasticsearch-master-credentials
+            key: password
+
+    # Resource requests/limits as needed
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 200m
+        memory: 256Mi
+    extraVolumes:
+      - name: elastic-certs
+        secret:
+          secretName: elasticsearch-master-certs
+
+    extraVolumeMounts:
+      - name: elastic-certs
+        mountPath: /fluent-bit/tls
+        readOnly: true

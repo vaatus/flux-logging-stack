@@ -3,6 +3,7 @@ kind: Kustomization
 resources:
   # Apply Elasticsearch next
   - ./Elasticsearch/
+  - ./FluentBit/
   # Additional services can be added later
   # - Fluent-bit/kustomization.yaml
   # - Kibana/kustomization.yaml
