@@ -1,11 +1,11 @@
 apiVersion: helm.toolkit.fluxcd.io/v2beta1
 kind: HelmRelease
 metadata:
-  name: kibana
+  name: kibana-lb
   namespace: flux-system
 spec:
   interval: 5m
-  releaseName: kibana
+  releaseName: kibana-lb
   chart:
     spec:
       chart: kibana
