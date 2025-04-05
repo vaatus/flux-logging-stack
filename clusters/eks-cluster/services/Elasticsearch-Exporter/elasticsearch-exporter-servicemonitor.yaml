@@ -8,8 +8,8 @@ metadata:
 spec:
   selector:
     matchLabels:
-      app.kubernetes.io/name: prometheus-elasticsearch-exporter
-      app.kubernetes.io/instance: prometheus-elasticsearch-exporter
+      app: prometheus-elasticsearch-exporter
+      release: elasticsearch-exporter
   namespaceSelector:
     matchNames:
       - flux-system
