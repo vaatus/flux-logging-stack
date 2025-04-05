@@ -15,11 +15,12 @@ spec:
         name: grafana-charts
         namespace: flux-system
   values:
+    admin:
+      user: "admin"
+      password: "admin"
     service:
       type: LoadBalancer
       port: 80
-    adminUser: admin
-    adminPassword: admin
     resources:
       requests:
         cpu: "100m"
