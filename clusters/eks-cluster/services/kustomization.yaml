@@ -6,6 +6,7 @@ resources:
   - ./FluentBit/
   - ./Kibana/
   - ./kube-prometheus-stack/
+  - ./Elasticsearch-Exporter/
   # Additional services can be added later
   # - Fluent-bit/kustomization.yaml
   # - Kibana/kustomization.yaml

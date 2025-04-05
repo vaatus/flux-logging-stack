@@ -35,7 +35,16 @@ spec:
           secretKeyRef:
             name: elasticsearch-master-credentials
             key: password
-    
+    serviceMonitor:
+      enabled: true
+      labels:
+        release: kube-prometheus-stack       # Tells Prometheus operator to pick it up
+      interval: 10s
+      scrapeTimeout: 5s
+      additionalEndpoints:
+        - port: metrics
+          path: /api/v1/metrics/prometheus
+
 
     config:
       service: |

@@ -1,0 +1,34 @@
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: elasticsearch-exporter
+  namespace: flux-system
+spec:
+  releaseName: elasticsearch-exporter
+  chart:
+    spec:
+      chart: prometheus-elasticsearch-exporter
+      version: "5.8.0"  # A valid version from the repo
+      sourceRef:
+        kind: HelmRepository
+        name: prometheus-community
+        namespace: flux-system
+  values:
+    env:
+      ES_USERNAME: elastic
+      ES_PASSWORD: ""  # We'll pull from a secret
+    extraEnvSecrets:
+      ES_PASSWORD:
+        secret: elasticsearch-master-credentials
+        key: password
+    es:
+      uri: "https://elasticsearch-master.flux-system:9200"
+      sslSkipVerify: true
+      all: true
+      indices: true
+    serviceMonitor:
+      enabled: true
+      labels:
+        release: kube-prometheus-stack
+      interval: 15s
+      scrapeTimeout: 10s
