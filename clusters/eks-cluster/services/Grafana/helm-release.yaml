@@ -2,39 +2,31 @@ apiVersion: helm.toolkit.fluxcd.io/v2beta1
 kind: HelmRelease
 metadata:
   name: grafana
-  namespace: flux-system
+  namespace: flux-system          # Namespace for Grafana
 spec:
-  interval: 5m
-  releaseName: grafana
+  interval: 5m                   # Flux sync interval for this HelmRelease
+  releaseName: grafana           # Helm release name (optional)
+  targetNamespace: flux-system    # Namespace to install Grafana into
   chart:
     spec:
       chart: grafana
-      version: "6.52.1"
+      version: 8.3.8
       sourceRef:
         kind: HelmRepository
-        name: grafana-charts
+        name: grafana-repo
         namespace: flux-system
   values:
     admin:
-      user: "admin"
-      password: "admin"
+      existingSecret: grafana-admin-secret
     service:
       type: LoadBalancer
       port: 80
-    resources:
-      requests:
-        cpu: "100m"
-        memory: "256Mi"
-      limits:
-        cpu: "200m"
-        memory: "512Mi"
-    env:
-      - name: GF_METRICS_ENABLED
-        value: "true"
+      annotations:
+        service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+        service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
     serviceMonitor:
       enabled: true
+      interval: 30s
+      labels:
+        release: "kube-prometheus-stack"
       namespace: flux-system
-      additionalLabels:
-        release: kube-prometheus-stack
-      interval: 15s
-      scrapeTimeout: 10s
