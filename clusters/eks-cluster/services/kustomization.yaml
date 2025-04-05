@@ -4,6 +4,7 @@ resources:
   # Apply Elasticsearch next
   - ./Elasticsearch/
   - ./FluentBit/
+  - ./Kibana/
   # Additional services can be added later
   # - Fluent-bit/kustomization.yaml
   # - Kibana/kustomization.yaml
