@@ -5,10 +5,10 @@ metadata:
   namespace: flux-system
 spec:
   interval: 5m
-  releaseName: elasticsearch-exporter
+  releaseName: prometheus-elasticsearch-exporter
   chart:
     spec:
-      chart: elasticsearch-exporter
+      chart: prometheus-elasticsearch-exporter
       version: "5.8.0"  # A valid version from the repo
       sourceRef:
         kind: HelmRepository
