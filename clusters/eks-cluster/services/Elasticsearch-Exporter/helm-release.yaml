@@ -4,6 +4,7 @@ metadata:
   name: elasticsearch-exporter
   namespace: flux-system
 spec:
+  interval: 5m
   releaseName: elasticsearch-exporter
   chart:
     spec:
