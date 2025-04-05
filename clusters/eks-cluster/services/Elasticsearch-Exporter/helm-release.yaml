@@ -8,7 +8,7 @@ spec:
   releaseName: elasticsearch-exporter
   chart:
     spec:
-      chart: prometheus-elasticsearch-exporter
+      chart: elasticsearch-exporter
       version: "5.8.0"  # A valid version from the repo
       sourceRef:
         kind: HelmRepository
