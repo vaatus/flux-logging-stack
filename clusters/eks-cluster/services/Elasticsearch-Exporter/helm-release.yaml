@@ -12,7 +12,7 @@ spec:
       version: "5.8.0"  # A valid version from the repo
       sourceRef:
         kind: HelmRepository
-        name: prometheus-community
+        name: prometheus-charts
         namespace: flux-system
   values:
     env:
