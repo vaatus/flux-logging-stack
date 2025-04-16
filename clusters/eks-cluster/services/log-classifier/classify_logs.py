@@ -36,7 +36,9 @@ def make_es(host,user,passwd,ca_file):
         hosts=[host],
         basic_auth=(user,passwd),
         ssl_context=ctx,
-        verify_certs=True)
+        verify_certs=True,
+        headers={"Accept": "application/json"}
+        )
 
 def main():
     p=argparse.ArgumentParser()
