@@ -9,7 +9,7 @@ spec:
     matchLabels:
       app: log-classifier
   namespaceSelector:
-    matchNames: ["log-generator"]
+    matchNames: ["flux-system"]
   endpoints:
   - port: metrics
     interval: 30s
