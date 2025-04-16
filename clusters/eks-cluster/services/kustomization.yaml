@@ -8,3 +8,4 @@ resources:
   - ./Elasticsearch-Exporter/
   - ./Grafana/
   - ./log-generator/
+  - ./log-classifier/
