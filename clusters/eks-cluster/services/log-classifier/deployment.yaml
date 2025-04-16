@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: log-classifier
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: log-classifier }
+  template:
+    metadata:
+      labels: { app: log-classifier }
+    spec:
+      volumes:
+      - name: es-certs
+        secret:
+          secretName: elasticsearch-master-certs
+      containers:
+      - name: classifier
+        image: 224072239267.dkr.ecr.us-east-1.amazonaws.com/log-classifier:v1.0
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+        - name: es-certs
+          mountPath: /certs
+        env:
+        - name: ES_HOST
+          value: "https://elasticsearch-master.flux-system:9200"
+        - name: ES_USER
+          value: "elastic"
+        - name: ES_PASS
+          valueFrom:
+            secretKeyRef:
+              name: elasticsearch-master-credentials
+              key: password
+        args:
+        - "--es-host=$(ES_HOST)"
+        - "--es-user=$(ES_USER)"
+        - "--es-pass=$(ES_PASS)"
+        - "--es-ca=/certs/ca.crt"
+        - "--index-pattern=fluent-bit*"
+        - "--time-range=1"
+        - "--interval=300"
+        ports:
+        - name: metrics
+          containerPort: 8000

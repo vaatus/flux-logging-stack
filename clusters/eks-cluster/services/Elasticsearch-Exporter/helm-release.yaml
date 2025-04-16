@@ -8,7 +8,7 @@ spec:
   chart:
     spec:
       chart: prometheus-elasticsearch-exporter
-      version: "5.8.0"  # A valid version from the repo
+      version: "5.8.0"
       sourceRef:
         kind: HelmRepository
         name: prometheus-charts
@@ -16,7 +16,7 @@ spec:
   values:
     env:
       ES_USERNAME: elastic
-      ES_PASSWORD: ""  # We'll pull from a secret
+      ES_PASSWORD: ""  # pulled from a secret
     extraEnvSecrets:
       ES_PASSWORD:
         secret: elasticsearch-master-credentials

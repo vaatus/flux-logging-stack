@@ -1,0 +1,15 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: log-classifier
+  labels:
+    release: kube-prometheus-stack
+spec:
+  selector:
+    matchLabels:
+      app: log-classifier
+  namespaceSelector:
+    matchNames: ["log-generator"]
+  endpoints:
+  - port: metrics
+    interval: 30s
