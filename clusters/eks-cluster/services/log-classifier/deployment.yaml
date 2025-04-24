@@ -10,6 +10,7 @@ spec:
     metadata:
       labels: { app: log-classifier }
     spec:
+      serviceAccountName: log-classifier
       volumes:
       - name: es-certs
         secret:
@@ -22,6 +23,8 @@ spec:
         - name: es-certs
           mountPath: /certs
         env:
+        - name: CSV_S3_BUCKET
+          value: my-log-csv-bkt
         - name: ES_HOST
           value: "https://elasticsearch-master.flux-system:9200"
         - name: ES_USER

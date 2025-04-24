@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: log-classifier
+  namespace: flux-system
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::224072239267:role/log-classifier-s3

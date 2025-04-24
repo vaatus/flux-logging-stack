@@ -1,0 +1,13 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [{
+    "Effect": "Allow",
+    "Principal": { "Federated": "arn:aws:iam::224072239267:oidc-provider/oidc.eks.us-east-1.amazonaws.com/id/9D7613B22760FD1DAD64256240F5790A" },
+    "Action": "sts:AssumeRoleWithWebIdentity",
+    "Condition": {
+      "StringEquals": {
+        "oidc.eks.us-east-1.amazonaws.com/id/9D7613B22760FD1DAD64256240F5790A:sub": "system:serviceaccount:flux-system:log-classifier"
+      }
+    }
+  }]
+}
