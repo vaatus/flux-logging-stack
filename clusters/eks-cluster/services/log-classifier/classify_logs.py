@@ -99,8 +99,11 @@ def write_csv(rows: List[dict], out_dir: str, s3_bucket: str | None) -> None:
         try:
             boto3.client("s3").upload_file(path, s3_bucket, name)
             print(f"• CSV uploaded → s3://{s3_bucket}/{name}", flush=True)
-        except botocore.exceptions.BotoCoreError as err:
-            print("✗ S3 upload failed:", err, flush=True)
+        except botocore.exceptions.ClientError as e:
+            code = e.response["Error"]["Code"]
+            msg  = e.response["Error"]["Message"]
+            print(f"✗ S3 upload failed ({code}): {msg}", flush=True)
+
 
 # ── Main loop ──────────────────────────────────────────────────────────────────
 def main() -> None:
