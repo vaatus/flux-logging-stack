@@ -87,7 +87,7 @@ def write_csv(rows: List[dict], out_dir: str, s3_bucket: str | None) -> None:
         print("• no rows → CSV skipped", flush=True)
         return
 
-    ts   = datetime.datetime.utcnow().strftime("%Y-%m-%d_%H-%M-%S")
+    ts   = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d_%H-%M-%S")
     name = f"classified_{ts}.csv"
     os.makedirs(out_dir, exist_ok=True)
     path = os.path.join(out_dir, name)
