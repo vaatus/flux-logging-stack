@@ -24,7 +24,7 @@ spec:
           mountPath: /certs
         env:
         - name: CSV_S3_BUCKET
-          value: my-log-csv-bkt
+          value: log-csv-bkt
         - name: ES_HOST
           value: "https://elasticsearch-master.flux-system:9200"
         - name: ES_USER
