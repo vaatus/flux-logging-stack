@@ -34,9 +34,11 @@ if not keys:
 print(f"✓ {len(keys)} CSV files found, reading…")
 datasets = []
 for k in keys:
-    # pandas can read directly from s3:// with s3fs
-    df = pd.read_csv(f"s3://{k}", storage_options=fs.storage_kwargs)
-    # keep only the 4 labels we care about
+    # k looks like  "log-csv-bkt/classified_2025-04-30_12-15-02.csv"
+    with fs.open(k, "rb") as f:                 # ← fixed
+        df = pd.read_csv(f)
+
+    # keep only the 4 target labels
     df = df[df["tags"].str.contains("|".join(LABELS))]
     datasets.append(Dataset.from_pandas(df, preserve_index=False))
 
