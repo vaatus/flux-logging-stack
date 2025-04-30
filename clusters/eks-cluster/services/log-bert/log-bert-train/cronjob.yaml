@@ -1,0 +1,25 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: log-bert-train
+spec:
+  schedule: "0 3 * * *"        # 03:00 UTC
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      ttlSecondsAfterFinished: 86400
+      template:
+        spec:
+          serviceAccountName: log-bert-sa
+          restartPolicy: Never
+          containers:
+          - name: trainer
+            image: 224072239267.dkr.ecr.us-east-1.amazonaws.com/log-bert-train:v0.1
+            args:
+            - "--bucket=log-csv-bkt"
+            - "--csv-prefix=classified_"
+            - "--model-output=s3://log-csv-bkt/models/distilbert"
+            - "--epochs=1"
+            resources:
+              requests: {cpu: "500m", memory: "1Gi"}
+              limits:   {cpu: "1",   memory: "2Gi"}
