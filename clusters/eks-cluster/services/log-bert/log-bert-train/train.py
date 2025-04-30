@@ -9,6 +9,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--bucket", required=True)
 parser.add_argument("--csv-prefix", default="classified_")
 parser.add_argument("--epochs", type=int, default=1)
+parser.add_argument("--model-output", required=True,
+                    help="s3 URL (s3://bucket/path/) where the tar.gz is stored")
 args = parser.parse_args()
 
 # 1. load CSVs straight from S3
@@ -57,11 +59,15 @@ trainer.train()
 trainer.save_pretrained("/tmp/model")
 
 # 5. upload artefacts
-import boto3, pathlib, tarfile
-s3 = boto3.client("s3")
-tar_path="/tmp/model.tar.gz"
-with tarfile.open(tar_path,"w:gz") as tar:
+import boto3, pathlib, tarfile, urllib.parse
+dst = urllib.parse.urlparse(args.model_output)
+bucket = dst.netloc
+key    = dst.path.lstrip("/") + "distilbert.tar.gz"
+
+tar_path = "/tmp/model.tar.gz"
+with tarfile.open(tar_path, "w:gz") as tar:
     for f in pathlib.Path("/tmp/model").glob("*"):
         tar.add(f, arcname=f.name)
-s3.upload_file(tar_path, args.bucket, "models/distilbert.tar.gz")
-print("Model uploaded.")
+
+boto3.client("s3").upload_file(tar_path, bucket, key)
+print(f"Model uploaded → s3://{bucket}/{key}")
