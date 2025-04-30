@@ -13,9 +13,21 @@ parser.add_argument("--model-output", required=True,
                     help="s3 URL (s3://bucket/path/) where the tar.gz is stored")
 args = parser.parse_args()
 
-# 1. load CSVs straight from S3
-fs = s3fs.S3FileSystem()
-csv_paths = fs.glob(f"{args.bucket}/{args.csv_prefix}*.csv")
+# 1. Locate CSVs on S3  ────────────────────────────────────────────
+#    `datasets.load_dataset` wants absolute **s3://bucket/key** URIs.
+#    Building them ourselves means s3fs only needs *ListBucket*,
+#    not *ListAllMyBuckets*.
+
+fs = s3fs.S3FileSystem()                      # creds from IRSA
+
+# returns e.g.  ["classified_2025-04-29_15-49-35.csv", …]
+keys = fs.glob(f"{args.bucket}/{args.csv_prefix}*.csv")
+if not keys:
+    raise RuntimeError("no CSV files found in bucket/path")
+
+# prepend the URI scheme
+csv_paths = [f"s3://{k}" for k in keys]
+print("Found", len(csv_paths), "CSV files")
 dataset   = load_dataset(
               "csv",
               data_files=csv_paths,
