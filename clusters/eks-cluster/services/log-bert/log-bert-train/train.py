@@ -1,86 +1,101 @@
-import os, argparse, s3fs, torch
-from datasets import load_dataset
+#!/usr/bin/env python3
+"""
+Fine-tune DistilBERT on CSV logs stored in S3.
+Works even on datasets<=2.18 because we bypass load_dataset(..., s3://…).
+"""
+
+import argparse, datetime, json, os, tarfile, tempfile, pathlib, boto3, s3fs
+import pandas as pd
+import torch
+from datasets import Dataset, concatenate_datasets
 from transformers import (
     AutoTokenizer, AutoModelForSequenceClassification,
-    TrainingArguments, Trainer
+    DataCollatorWithPadding, Trainer, TrainingArguments,
 )
 
-parser = argparse.ArgumentParser()
-parser.add_argument("--bucket", required=True)
-parser.add_argument("--csv-prefix", default="classified_")
-parser.add_argument("--epochs", type=int, default=1)
-parser.add_argument("--model-output", required=True,
-                    help="s3 URL (s3://bucket/path/) where the tar.gz is stored")
-args = parser.parse_args()
+LABELS = ["DEBUG", "WARN", "ERROR", "EXCEPTION"]
+LABEL2ID = {l: i for i, l in enumerate(LABELS)}
+ID2LABEL = {i: l for l, i in LABEL2ID.items()}
 
-# 1. Locate CSVs on S3  ────────────────────────────────────────────
-#    `datasets.load_dataset` wants absolute **s3://bucket/key** URIs.
-#    Building them ourselves means s3fs only needs *ListBucket*,
-#    not *ListAllMyBuckets*.
+# ────────────────────────── CLI ──────────────────────────
+ap = argparse.ArgumentParser()
+ap.add_argument("--bucket", required=True)              # S3 bucket name
+ap.add_argument("--csv-prefix", default="classified_")  # key prefix
+ap.add_argument("--epochs", type=int, default=1)
+ap.add_argument("--model-output", required=True)        # s3://bucket/path/
+args = ap.parse_args()
 
-fs = s3fs.S3FileSystem()                      # creds from IRSA
-
-# returns e.g.  ["classified_2025-04-29_15-49-35.csv", …]
+# ─────────────────── collect CSVs from S3 ───────────────────
+fs = s3fs.S3FileSystem()          # creds via IRSA
 keys = fs.glob(f"{args.bucket}/{args.csv_prefix}*.csv")
 if not keys:
-    raise RuntimeError("no CSV files found in bucket/path")
+    raise SystemExit("✗ No CSV files matched")
 
-# prepend the URI scheme
-csv_paths = [f"s3://{k}" for k in keys]
-print("Found", len(csv_paths), "CSV files")
+print(f"✓ {len(keys)} CSV files found, reading…")
+datasets = []
+for k in keys:
+    # pandas can read directly from s3:// with s3fs
+    df = pd.read_csv(f"s3://{k}", storage_options=fs.storage_kwargs)
+    # keep only the 4 labels we care about
+    df = df[df["tags"].str.contains("|".join(LABELS))]
+    datasets.append(Dataset.from_pandas(df, preserve_index=False))
 
-# datasets figures out S3 access on its own
-dataset = load_dataset(
-    "csv",
-    data_files=csv_paths,
-    split="train")
+dataset = concatenate_datasets(datasets).train_test_split(test_size=0.1, seed=42)
+print(f"✓ Dataset built: {len(dataset['train'])} train / {len(dataset['test'])} val rows")
 
-# split train/validation
-dataset = dataset.train_test_split(test_size=0.1, seed=42)
-
-# 2. tokenise
+# ───────────────────── tokenise & label ─────────────────────
 tok = AutoTokenizer.from_pretrained("distilbert-base-uncased")
-def encode(batch): return tok(batch["message"], truncation=True)
-dataset = dataset.map(encode, batched=True)
 
-# 3. label map
-labels = ["DEBUG","INFO","WARN","ERROR","EXCEPTION"]
-id2l   = dict(enumerate(labels))
-l2id   = {v:k for k,v in id2l.items()}
-dataset = dataset.map(lambda b: {"label": [l2id.get(t.split('|')[0],0)
-                                  for t in b["tags"]]})
+def encode(batch):
+    batch_enc = tok(batch["message"], truncation=True)
+    batch_enc["labels"] = [
+        LABEL2ID[tag.split("|")[0]] for tag in batch["tags"]
+    ]
+    return batch_enc
 
+dataset = dataset.map(encode, batched=True, remove_columns=dataset["train"].column_names)
+collator = DataCollatorWithPadding(tok)
+
+# ───────────────────────── model ────────────────────────────
 model = AutoModelForSequenceClassification.from_pretrained(
-            "distilbert-base-uncased",
-            num_labels=len(labels))
+    "distilbert-base-uncased",
+    num_labels=len(LABELS),
+    id2label=ID2LABEL,
+    label2id=LABEL2ID,
+)
 
-# 4. minimal training
-args_tr = TrainingArguments(
-    output_dir      = "/tmp/out",
-    num_train_epochs= args.epochs,
+training_args = TrainingArguments(
+    output_dir          = "/tmp/out",
+    num_train_epochs    = args.epochs,
     per_device_train_batch_size = 8,
     per_device_eval_batch_size  = 8,
-    evaluation_strategy="epoch",
-    logging_steps=50,
-    save_total_limit=1,
-    push_to_hub=False)
+    evaluation_strategy = "epoch",
+    save_total_limit    = 1,
+    logging_steps       = 50,
+)
 
-trainer = Trainer(model, args_tr,
-                  train_dataset=dataset["train"],
-                  eval_dataset =dataset["test"])
+trainer = Trainer(
+    model,
+    training_args,
+    train_dataset = dataset["train"],
+    eval_dataset  = dataset["test"],
+    data_collator = collator,
+)
 trainer.train()
-trainer.save_pretrained("/tmp/model")
 
-# 5. upload artefacts
-import boto3, pathlib, tarfile, urllib.parse
-dst = urllib.parse.urlparse(args.model_output)
-bucket = dst.netloc
-key    = dst.path.lstrip("/") + "distilbert.tar.gz"
+# ─────────────────── package & upload ───────────────────────
+tmp_dir = pathlib.Path(tempfile.mkdtemp(prefix="bert_model_"))
+model.save_pretrained(tmp_dir)
+tok.save_pretrained(tmp_dir)
+(tmp_dir / "label_map.json").write_text(json.dumps(ID2LABEL))
 
-tar_path = "/tmp/model.tar.gz"
-with tarfile.open(tar_path, "w:gz") as tar:
-    for f in pathlib.Path("/tmp/model").glob("*"):
+archive = tmp_dir.with_suffix(".tar.gz")
+with tarfile.open(archive, "w:gz") as tar:
+    for f in tmp_dir.iterdir():
         tar.add(f, arcname=f.name)
 
-boto3.client("s3").upload_file(tar_path, bucket, key)
-print(f"Model uploaded → s3://{bucket}/{key}")
+dst = boto3.client("s3")
+out = os.path.join(args.model_output.lstrip("/"), f"distilbert_{datetime.datetime.utcnow():%Y-%m-%d}.tar.gz")
+bucket = args.model_output.replace("s3://", "").split("/", 1)[0]
+dst.upload_file(str(archive), bucket, out)
+print(f"✓ Model uploaded → s3://{bucket}/{out}")
