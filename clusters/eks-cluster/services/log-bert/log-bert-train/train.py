@@ -28,11 +28,12 @@ if not keys:
 # prepend the URI scheme
 csv_paths = [f"s3://{k}" for k in keys]
 print("Found", len(csv_paths), "CSV files")
-dataset   = load_dataset(
-              "csv",
-              data_files=csv_paths,
-              split="train",
-              fs=fs)
+
+# datasets figures out S3 access on its own
+dataset = load_dataset(
+    "csv",
+    data_files=csv_paths,
+    split="train")
 
 # split train/validation
 dataset = dataset.train_test_split(test_size=0.1, seed=42)
