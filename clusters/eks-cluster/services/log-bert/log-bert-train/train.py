@@ -42,9 +42,6 @@ for k in keys:
             datasets.append(ds)
             del chunk
 
-    # keep only the 4 target labels
-    df = df[df["tags"].str.contains("|".join(LABELS))]
-    datasets.append(Dataset.from_pandas(df, preserve_index=False))
 
 dataset = concatenate_datasets(datasets).train_test_split(test_size=0.1, seed=42)
 print(f"✓ Dataset built: {len(dataset['train'])} train / {len(dataset['test'])} val rows")
