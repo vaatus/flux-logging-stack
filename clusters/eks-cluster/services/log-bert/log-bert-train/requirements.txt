@@ -5,3 +5,5 @@ transformers==4.39.3
 torch==2.2.2
 numpy==1.26.4
 pandas==2.2.1
+accelerate==0.27.2
+safetensors==0.4.2
