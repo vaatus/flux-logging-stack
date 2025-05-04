@@ -35,8 +35,12 @@ print(f"✓ {len(keys)} CSV files found, reading…")
 datasets = []
 for k in keys:
     # k looks like  "log-csv-bkt/classified_2025-04-30_12-15-02.csv"
-    with fs.open(k, "rb") as f:                 # ← fixed
-        df = pd.read_csv(f)
+    with fs.open(k, "rb") as f:
+        for chunk in pd.read_csv(f, chunksize=50_000):
+            chunk = chunk[chunk["tags"].str.contains("|".join(LABELS))]
+            ds = Dataset.from_pandas(chunk, preserve_index=False)
+            datasets.append(ds)
+            del chunk
 
     # keep only the 4 target labels
     df = df[df["tags"].str.contains("|".join(LABELS))]
