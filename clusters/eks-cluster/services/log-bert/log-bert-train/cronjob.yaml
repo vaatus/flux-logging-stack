@@ -14,7 +14,7 @@ spec:
           restartPolicy: Never
           containers:
           - name: trainer
-            image: 224072239267.dkr.ecr.us-east-1.amazonaws.com/log-bert-train:v1:1
+            image: 224072239267.dkr.ecr.us-east-1.amazonaws.com/log-bert-train:v1.1
             args:
             - "--bucket=log-csv-bkt"
             - "--csv-prefix=classified_"
