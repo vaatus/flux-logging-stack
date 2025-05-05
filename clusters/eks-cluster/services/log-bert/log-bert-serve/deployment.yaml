@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: log-bert-serve
+  labels: { app: log-bert-serve }
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: log-bert-serve }
+  template:
+    metadata:
+      labels: { app: log-bert-serve }
+    spec:
+      containers:
+      - name: serve
+        image: 224072239267.dkr.ecr.us-east-1.amazonaws.com/log-bert-serve:v1
+        imagePullPolicy: Always
+        ports: [{ containerPort: 8080 }]
+        env:
+        - { name: S3_BUCKET, value: "log-csv-bkt" }
+        - { name: MODEL_TAR, value: "models/bert-tiny_2025-05-04.tar.gz" }
+        resources:
+          requests: { cpu: "250m", memory: "512Mi" }
+          limits:   { cpu: "1",   memory: "1Gi" }
+        livenessProbe:
+          httpGet: { path: /healthz, port: 8080 }
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        readinessProbe:
+          httpGet: { path: /healthz, port: 8080 }
+          initialDelaySeconds: 5
+          periodSeconds: 10
