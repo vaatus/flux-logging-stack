@@ -10,3 +10,4 @@ resources:
   - ./log-generator/
   - ./log-classifier/
   - ./log-bert/log-bert-train/
+  - ./log-bert/log-bert-serve/
