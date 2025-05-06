@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 """
-Fast fine-tune of a tiny BERT on log CSVs stored in S3.
+Fast fine-tune of DistilBERT (default) on log CSVs stored in S3.
 
-  • Reads every CSV in 50 k-row chunks
-  • Keeps at most --max-per-class unique messages per label
-  • Uses bert-tiny for speed (change MODEL_NAME to distilbert-base-uncased if
-    you later need more accuracy)
-  • Auto-detects GPU → fp16 + bigger batch
+• Streams every CSV in 50 k-row chunks
+• Keeps at most --max-per-class unique messages per label
+• Auto-detects GPU → fp16 + larger batch
 """
 
 import argparse, datetime, json, os, tarfile, tempfile, pathlib, random
@@ -19,21 +17,25 @@ from transformers import (
     DataCollatorWithPadding, Trainer, TrainingArguments,
 )
 
-LABELS   = ["DEBUG", "WARN", "ERROR", "EXCEPTION"]
+LABELS = ["DEBUG", "WARN", "ERROR", "EXCEPTION"]
 LABEL2ID = {l: i for i, l in enumerate(LABELS)}
 ID2LABEL = {i: l for l, i in LABEL2ID.items()}
 
-# ───────────────────────── CLI ────────────────────────────
-p = argparse.ArgumentParser()
-p.add_argument("--bucket",       required=True)
-p.add_argument("--csv-prefix",   default="classified_")
-p.add_argument("--model-output", required=True)          # s3://bucket/path/
-p.add_argument("--epochs",       type=int, default=1)
-p.add_argument("--max-per-class",type=int, default=5_000)
-args = p.parse_args()
+# ──────────────── CLI ────────────────────────────────
+ap = argparse.ArgumentParser()
+ap.add_argument("--bucket", required=True)
+ap.add_argument("--csv-prefix", default="classified_")
+ap.add_argument("--model-output", required=True)      # s3://bucket/path/
+ap.add_argument("--epochs", type=int, default=2)
+ap.add_argument("--max-per-class", type=int, default=20_000)
+ap.add_argument("--model-name", default="distilbert-base-uncased",
+                help="Hugging-Face model name; override to test other models")
+args = ap.parse_args()
 
-# ─────────────── 1. Stream & sample CSVs ──────────────────
-fs   = s3fs.S3FileSystem()          # IRSA creds
+MODEL_NAME = args.model_name
+
+# ───────── 1. Stream & sample CSVs ───────────────────
+fs = s3fs.S3FileSystem()           # IRSA creds
 keys = fs.glob(f"{args.bucket}/{args.csv_prefix}*.csv")
 if not keys:
     raise SystemExit("✗ No CSV files matched")
@@ -59,16 +61,13 @@ for k in keys:
                 cnt[tag] += 1
                 rows.append({"message": msg, "tags": tag})
             del chunk
-    # stop early if we already hit the cap for every class
     if all(cnt[l] >= args.max_per_class for l in LABELS):
         break
 
-print("✓ Sampled rows:", len(rows))
+print(f"✓ Sampled rows: {len(rows):,}")
 dataset = Dataset.from_list(rows).train_test_split(test_size=0.1, seed=42)
 
-# ───────────── 2. Tokenise & collate ──────────────────────
-MODEL_NAME = "prajjwal1/bert-tiny"
-
+# ───────── 2. Tokenise & collate ─────────────────────
 tok = AutoTokenizer.from_pretrained(MODEL_NAME)
 
 def encode(batch):
@@ -80,27 +79,27 @@ dataset = dataset.map(encode, batched=True,
                       remove_columns=dataset["train"].column_names)
 collator = DataCollatorWithPadding(tok)
 
-# ───────────── 3. Model & training args ───────────────────
-has_gpu   = torch.cuda.is_available()
-batch_sz  = 32 if has_gpu else 8
+# ───────── 3. Model & training args ──────────────────
+has_gpu  = torch.cuda.is_available()
+batch_sz = 32 if has_gpu else 4      # keep CPU RAM <3 GiB
 
 model = AutoModelForSequenceClassification.from_pretrained(
     MODEL_NAME,
-    num_labels = len(LABELS),
-    id2label   = ID2LABEL,
-    label2id   = LABEL2ID,
+    num_labels=len(LABELS),
+    id2label=ID2LABEL,
+    label2id=LABEL2ID,
 )
 model.gradient_checkpointing_enable()
 
 training_args = TrainingArguments(
-    output_dir               = "/tmp/out",
-    num_train_epochs         = args.epochs,
-    per_device_train_batch_size = batch_sz,
-    per_device_eval_batch_size  = batch_sz,
-    fp16                     = has_gpu,
-    evaluation_strategy      = "epoch",
-    logging_steps            = 20,
-    save_total_limit         = 1,
+    output_dir="/tmp/out",
+    num_train_epochs=args.epochs,
+    per_device_train_batch_size=batch_sz,
+    per_device_eval_batch_size=batch_sz,
+    fp16=has_gpu,
+    evaluation_strategy="epoch",
+    logging_steps=20,
+    save_total_limit=1,
 )
 
 print(f"▶ Training on {'GPU' if has_gpu else 'CPU'} "
@@ -113,7 +112,7 @@ Trainer(
     data_collator=collator,
 ).train()
 
-# ───────────── 4. Package & upload ────────────────────────
+# ───────── 4. Package & upload ───────────────────────
 tmp_dir = pathlib.Path(tempfile.mkdtemp(prefix="bert_model_"))
 model.save_pretrained(tmp_dir)
 tok.save_pretrained(tmp_dir)
@@ -124,9 +123,10 @@ with tarfile.open(archive, "w:gz") as tar:
     for f in tmp_dir.iterdir():
         tar.add(f, arcname=f.name)
 
-s3  = boto3.client("s3")
+s3 = boto3.client("s3")
 dst = args.model_output.replace("s3://", "")
 bucket, key_prefix = dst.split("/", 1)
-key = f"{key_prefix.rstrip('/')}/bert-tiny_{datetime.datetime.utcnow():%Y-%m-%d}.tar.gz"
+fname = f"{MODEL_NAME.split('/')[-1]}_{datetime.datetime.utcnow():%Y-%m-%d}.tar.gz"
+key = f"{key_prefix.rstrip('/')}/{fname}"
 s3.upload_file(str(archive), bucket, key)
 print(f"✓ Model uploaded → s3://{bucket}/{key}")
