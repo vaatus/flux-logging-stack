@@ -19,7 +19,8 @@ spec:
             - "--bucket=log-csv-bkt"
             - "--csv-prefix=classified_"
             - "--model-output=s3://log-csv-bkt/models/"
-            - "--epochs=1"
+            - "--epochs=2"
+            - --max-per-class=20000
             resources:
               requests: {cpu: "1", memory: "8Gi"}
               limits:   {cpu: "2",   memory: "12Gi"}
