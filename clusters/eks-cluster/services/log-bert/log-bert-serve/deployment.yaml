@@ -11,6 +11,7 @@ spec:
     metadata:
       labels: { app: log-bert-serve }
     spec:
+      serviceAccountName: log-bert-serve-sa
       containers:
       - name: serve
         image: 224072239267.dkr.ecr.us-east-1.amazonaws.com/log-bert-serve:v1
@@ -18,7 +19,7 @@ spec:
         ports: [{ containerPort: 8080 }]
         env:
         - { name: S3_BUCKET, value: "log-csv-bkt" }
-        - { name: MODEL_TAR, value: "models/distilbert-base-uncased_2025-05-06.tar.gz" }
+        - { name: MODEL_TAR, value: "models/distilbert-base-uncased_2025-05-08.tar.gz" }
         resources:
           requests: { cpu: "250m", memory: "512Mi" }
           limits:   { cpu: "1",   memory: "2Gi" }
