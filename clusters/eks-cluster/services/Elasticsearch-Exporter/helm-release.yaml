@@ -37,25 +37,3 @@ spec:
       stats: true
       nodesStats: true
       indicesStats: true
-      indicesRecovery: true
-      indicesSegments: true
-      indicesFielddata: true
-      indicesCache: true
-      indicesQueryCache: true
-      indicesSearch: true
-      indicesStore: true
-      indicesWarmer: true
-      indicesIndexing: true
-      indicesMerge: true
-      indicesRefresh: true
-      indicesSearchShards: true
-      indicesFielddataEvictions: true
-      indicesQueryCacheEvictions: true
-      indicesSearchQueryCache: true
-      indicesSearchRequestCache: true
-      indicesSearchShards: true
-      indicesSearchShardsStats: true
-      indicesSearchShardsStats: true
-      indicesSearchShardsStats: true
-      indicesSearchShardsStats: true
-      indicesSearchShardsStats: true
