@@ -26,14 +26,4 @@ spec:
       sslSkipVerify: true
       all: true
       indices: true
-      nodes: true
-      shards: true
-      aliases: true
-      templates: true
-      snapshots: true
-      repositories: true
-      cluster: true
-      health: true
-      stats: true
-      nodesStats: true
-      indicesStats: true
+      indices_mappings: true
