@@ -26,3 +26,36 @@ spec:
       sslSkipVerify: true
       all: true
       indices: true
+      nodes: true
+      shards: true
+      aliases: true
+      templates: true
+      snapshots: true
+      repositories: true
+      cluster: true
+      health: true
+      stats: true
+      nodesStats: true
+      indicesStats: true
+      indicesRecovery: true
+      indicesSegments: true
+      indicesFielddata: true
+      indicesCache: true
+      indicesQueryCache: true
+      indicesSearch: true
+      indicesStore: true
+      indicesWarmer: true
+      indicesIndexing: true
+      indicesMerge: true
+      indicesRefresh: true
+      indicesSearchShards: true
+      indicesFielddataEvictions: true
+      indicesQueryCacheEvictions: true
+      indicesSearchQueryCache: true
+      indicesSearchRequestCache: true
+      indicesSearchShards: true
+      indicesSearchShardsStats: true
+      indicesSearchShardsStats: true
+      indicesSearchShardsStats: true
+      indicesSearchShardsStats: true
+      indicesSearchShardsStats: true
