@@ -14,7 +14,8 @@ At the beginning of the term:
 
 ## III. Architecture Overview
 
-![Fig. 1 – End-to-end architecture of the GitOps-managed logging & ML pipeline](![image](https://github-production-user-asset-6210df.s3.amazonaws.com/118371927/448576174-ae1b0306-7aa5-4c1a-8fce-322e8c1f3187.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAVCODYLSA53PQK4ZA%2F20250528%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20250528T203423Z&X-Amz-Expires=300&X-Amz-Signature=0dbe8f936bbb0b9f7fd67d52e91e6726fa08c5f0eeda4eedb6e26d027c3d5ff1&X-Amz-SignedHeaders=host)
+End-to-end architecture of the GitOps-managed logging & ML pipeline 
+![image](https://github-production-user-asset-6210df.s3.amazonaws.com/118371927/448576174-ae1b0306-7aa5-4c1a-8fce-322e8c1f3187.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAVCODYLSA53PQK4ZA%2F20250528%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20250528T203423Z&X-Amz-Expires=300&X-Amz-Signature=0dbe8f936bbb0b9f7fd67d52e91e6726fa08c5f0eeda4eedb6e26d027c3d5ff1&X-Amz-SignedHeaders=host)
 
 1. **Log Generation**  
    Synthetic or real container logs →  
