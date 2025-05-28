@@ -14,7 +14,8 @@ At the beginning of the term:
 
 ## III. Architecture Overview
 
-![Fig. 1 – End-to-end architecture of the GitOps-managed logging & ML pipeline](figures/architecture.png)
+![Fig. 1 – End-to-end architecture of the GitOps-managed logging & ML pipeline](![image](https://github.com/user-attachments/assets/ae1b0306-7aa5-4c1a-8fce-322e8c1f3187)
+)
 
 1. **Log Generation**  
    Synthetic or real container logs →  
