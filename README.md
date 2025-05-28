@@ -61,7 +61,7 @@ At the beginning of the term:
     -d '{"message":"An error occurred"}'
 
 
-V. Components
+## V. Components
 - Fluent Bit: Lightweight log forwarder, tails files, enriches metadata, TLS output.
 
 - Elasticsearch: Distributed full-text search engine, stores indices on EBS PVC.
