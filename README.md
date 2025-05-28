@@ -41,25 +41,26 @@ At the beginning of the term:
    flux bootstrap github \
      --owner=<you> --repository=<repo> --path=clusters/eks-cluster/flux-system
 2. Deploy Services
+   ```bash
    cd clusters/eks-cluster/flux-system
    git add .
    git commit -m "Initial pipeline"
    git push
    # Flux will apply all HelmRelease and Kustomization manifests
-
-3. Access Dashboards
+   ```
+4. Access Dashboards
 
   Kibana → via LoadBalancer on port 5601
 
   Grafana → via NLB on port 80
 
 4. Invoke Prediction
-
-  kubectl port-forward svc/log-bert-serve 80 -n flux-system
-  curl -XPOST localhost/predict \
-    -H 'Content-Type: application/json' \
-    -d '{"message":"An error occurred"}'
-
+   ```bash
+     kubectl port-forward svc/log-bert-serve 80 -n flux-system
+     curl -XPOST localhost/predict \
+       -H 'Content-Type: application/json' \
+       -d '{"message":"An error occurred"}'
+   ```
 
 ## V. Components
 - Fluent Bit: Lightweight log forwarder, tails files, enriches metadata, TLS output.
